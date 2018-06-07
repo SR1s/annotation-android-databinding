@@ -18,6 +18,7 @@ package android.databinding.tool.util;
 
 /**
  * Simple Preconditions utility class, similar to guava's but reports errors via L
+ * 简单的几个辅助方法，用于检查指定条件是否满足，不满足则打印日志输出
  */
 public class Preconditions {
     public static void check(boolean value, String error, Object... args) {

@@ -122,6 +122,10 @@ class KCode (private val s : String? = null){
     }
 
 
+    /**
+     * 递归生成代码
+     * n代表缩进多少层
+     */
     fun toS(n : Int, sb : StringBuilder) {
         if (s != null) {
             sb.append(s)
@@ -150,6 +154,9 @@ class KCode (private val s : String? = null){
 
     }
 
+    /**
+     * 调用这个方法，生成代码
+     */
     fun generate() : String {
         val sb = StringBuilder()
         toS(0, sb)
@@ -157,6 +164,21 @@ class KCode (private val s : String? = null){
     }
 }
 
+/**
+ * 很有意思的语法糖
+ * 原理就是定义了一个KCode类型的拓展函数
+ * 外部实现传入的函数就是这个拓展函数的实现
+ *
+ * 具体到这个函数，就是在返回KCode之前，执行了一段配置KCode的代码
+ * 意义在于这个拓展函数的特性
+ * 在代码块里，可以调用 KCode 定义的接口
+ * 也就是代码块的上下文切换到了 KCode 里
+ * kcode("") {
+ *     tab(<这里插入新的KCode>)
+ *     nl(<这里插入新的KCode>)
+ * }
+ * 这是语义化代码或者说DSL的实现手段
+ */
 fun kcode(s : String?, init : (KCode.() -> Unit)? = null) : KCode {
     val c = KCode(s)
     if (init != null) {

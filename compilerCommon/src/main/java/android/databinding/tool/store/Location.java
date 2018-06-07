@@ -31,10 +31,13 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
 /**
+ * 标识一段代码在文件或者文本中的位置
+ * 
  * Identifies the range of a code block inside a file or a string.
  * Note that, unlike antlr4 tokens, the line positions start from 0 (to be compatible with Studio).
  * <p>
- * Both start and end line/column indices are inclusive.
+ * Both start and end line/column indices are inclusive. 
+ * 意思是开始位置和结束位置是包含在内的，即[start, end] 
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class Location {

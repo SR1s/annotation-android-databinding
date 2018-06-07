@@ -107,11 +107,17 @@ public class LayoutFileParser {
             XMLParser parser = new XMLParser(tokenStream);
             XMLParser.DocumentContext expr = parser.document();
             XMLParser.ElementContext root = expr.element();
+
+            // 根节点不是 <layout>
             if (!"layout".equals(root.elmName.getText())) {
                 return null;
             }
+
+            // 提取 databinding 布局中的 <data> 节点
             XMLParser.ElementContext data = getDataNode(root);
+            // 提取 databinding 布局中 布局的根节点
             XMLParser.ElementContext rootView = getViewNode(original, root);
+            // 上面这个实现，也就限制了 databinding 布局里，根节点下只能有<data>和<out View>各一个节点
 
             if (hasMergeInclude(rootView)) {
                 L.e(ErrorMessages.INCLUDE_INSIDE_MERGE);
@@ -119,9 +125,11 @@ public class LayoutFileParser {
             }
             boolean isMerge = "merge".equals(rootView.elmName.getText());
 
+            // 把一堆信息放在这个Bundle里
             ResourceBundle.LayoutFileBundle bundle = new ResourceBundle.LayoutFileBundle(original,
                     xmlNoExtension, original.getParentFile().getName(), pkg, isMerge);
             final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
+            // 解析数据部分的信息
             parseData(original, data, bundle);
             parseExpressions(newTag, rootView, isMerge, bundle);
             return bundle;
@@ -292,28 +300,42 @@ public class LayoutFileParser {
         if (data == null) {
             return;
         }
+
+        // import 节点
         for (XMLParser.ElementContext imp : filter(data, "import")) {
             final Map<String, String> attrMap = attributeMap(imp);
             String type = attrMap.get("type");
             String alias = attrMap.get("alias");
+
+            // type 是必要参数
             Preconditions.check(StringUtils.isNotBlank(type), "Type of an import cannot be empty."
                     + " %s in %s", imp.toStringTree(), xml);
+
+            // 如果没有设置alias，那么默认的alias就是import进来的类的类名
             if (Strings.isNullOrEmpty(alias)) {
                 alias = type.substring(type.lastIndexOf('.') + 1);
             }
+            // 往bundle里添加import信息
             bundle.addImport(alias, type, new Location(imp));
         }
 
+        // variable 节点
         for (XMLParser.ElementContext variable : filter(data, "variable")) {
             final Map<String, String> attrMap = attributeMap(variable);
             String type = attrMap.get("type");
             String name = attrMap.get("name");
+
+            // type 和 name 都是必要参数
             Preconditions.checkNotNull(type, "variable must have a type definition %s in %s",
                     variable.toStringTree(), xml);
             Preconditions.checkNotNull(name, "variable must have a name %s in %s",
                     variable.toStringTree(), xml);
+
+            // 往bundle里添加变量信息
             bundle.addVariable(name, type, new Location(variable), true);
         }
+
+        // 自定义类名的配置
         final XMLParser.AttributeContext className = findAttribute(data, "class");
         if (className != null) {
             final String name = escapeQuotes(className.attrValue.getText(), true);
@@ -324,6 +346,7 @@ public class LayoutFileParser {
                         className.attrValue.getLine() - 1,
                         className.attrValue.getCharPositionInLine() + name.length()
                 );
+                // 设置Binding类的名字
                 bundle.setBindingClass(name, location);
             }
         }
@@ -345,6 +368,10 @@ public class LayoutFileParser {
         return view.get(0);
     }
 
+    /**
+     * 在节点里，过滤出指定的tag的子节点
+     * 返回值非空 @NotNull
+     */
     private List<XMLParser.ElementContext> filter(XMLParser.ElementContext root,
             String name) {
         List<XMLParser.ElementContext> result = new ArrayList<XMLParser.ElementContext>();
@@ -363,6 +390,10 @@ public class LayoutFileParser {
         return result;
     }
 
+    /**
+     * 在节点的子节点里，过滤出非指定tag的子节点
+     * 返回值非空 @NotNull
+     */
     private List<XMLParser.ElementContext> filterNot(XMLParser.ElementContext root,
             String name) {
         List<XMLParser.ElementContext> result = new ArrayList<XMLParser.ElementContext>();
@@ -401,27 +432,47 @@ public class LayoutFileParser {
             actualFile = xml;
         }
         // always create id from actual file when available. Gradle may duplicate files.
+        // 将这个文件的信息，从layout/main_activity.xml 转为 layout/main_activity
         String noExt = ParserHelper.stripExtension(actualFile.getName());
         String binderId = actualFile.getParentFile().getName() + '/' + noExt;
         // now if file has any binding expressions, find and delete them
         boolean changed = isBindingLayout(doc, xPath);
         if (changed) {
+            // 这个 changed 的意思应该是是否需要改变布局吧
             stripBindingTags(xml, out, binderId, encoding);
         } else if (!xml.equals(out)){
+            // 普通布局，但和输出地不一致，复制一份
             FileUtils.copyFile(xml, out);
         }
     }
 
+    /**
+     * 分析指定doc是否是databinding 布局
+     * 原理就是看布局是否以 <layout> 为根节点
+     */
     private boolean isBindingLayout(Document doc, XPath xPath) throws XPathExpressionException {
+        // XPATH_BINDING_LAYOUT : /layout
+        // (⊙﹏⊙)b 汗，想了半天
+        // 这个 "/layout" 是xpath表达式，表示从根节点选取一个tag为layout的节点
         return !get(doc, xPath, XPATH_BINDING_LAYOUT).isEmpty();
     }
 
+    /**
+     * 从输入的xml文档里，用 pattern的xpath表达式，查找节点
+     * @param doc 输入的xml文档，也就是布局xml
+     * @param xPath 用于编译xPath表达式的xPath对象 todo 这里是为了复用？xPath的创建很重么？
+     * @param pattern 用于匹配的xPath表达式
+     */
     private List<Node> get(Document doc, XPath xPath, String pattern)
             throws XPathExpressionException {
         final XPathExpression expr = xPath.compile(pattern);
         return toList((NodeList) expr.evaluate(doc, XPathConstants.NODESET));
     }
 
+    /**
+     * 把nodeList转成常见的List<Node>列表形式
+     * 返回值非空 @NotNull
+     */
     private List<Node> toList(NodeList nodeList) {
         List<Node> result = new ArrayList<Node>();
         for (int i = 0; i < nodeList.getLength(); i++) {
@@ -430,6 +481,10 @@ public class LayoutFileParser {
         return result;
     }
 
+    /**
+     * 输出一份只有布局的布局文件
+     * 不包含 数据、联动逻辑
+     */
     private void stripBindingTags(File xml, File output, String newTag, String encoding) throws IOException {
         String res = XmlEditor.strip(xml, newTag, encoding);
         Preconditions.checkNotNull(res, "layout file should've changed %s", xml.getAbsolutePath());
@@ -439,6 +494,10 @@ public class LayoutFileParser {
         }
     }
 
+    /**
+     * 进行文件的编码检测，输出编码
+     * 如果检测不出来，默认设为utf-8
+     */
     private static String findEncoding(File f) throws IOException {
         FileInputStream fin = new FileInputStream(f);
         try {
@@ -462,6 +521,9 @@ public class LayoutFileParser {
         }
     }
 
+    /**
+     * 获取节点的属性，以map的形式输出
+     */
     private static Map<String, String> attributeMap(XMLParser.ElementContext root) {
         final Map<String, String> result = new HashMap<String, String>();
         for (XMLParser.AttributeContext attr : XmlEditor.attributes(root)) {
@@ -481,6 +543,11 @@ public class LayoutFileParser {
         return null;
     }
 
+    /**
+     * 取得前后引号内的文本信息
+     * @param textWithQuites 前后带有引号的文本
+     * @param unescapeValue 是否需要对引号内的文本做xml反转义
+     */
     private static String escapeQuotes(String textWithQuotes, boolean unescapeValue) {
         char first = textWithQuotes.charAt(0);
         int start = 0, end = textWithQuotes.length();

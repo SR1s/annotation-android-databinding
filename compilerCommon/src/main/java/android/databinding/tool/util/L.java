@@ -27,6 +27,10 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
+/**
+ * 日志打印工具，和Log类似
+ * 默认输出到System.out和System.err
+ */
 public class L {
     private static boolean sEnableDebug = false;
     private static final Client sSystemClient = new Client() {

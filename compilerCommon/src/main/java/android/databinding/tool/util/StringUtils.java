@@ -62,6 +62,9 @@ public class StringUtils {
         return Character.toTitleCase(ch) + string.substring(1);
     }
 
+    /**
+     * 反转义xml
+     */
     public static String unescapeXml(String escaped) {
         // TODO: unescape unicode codepoints
         return escaped.replace(QUOT_ENTITY, "\"")

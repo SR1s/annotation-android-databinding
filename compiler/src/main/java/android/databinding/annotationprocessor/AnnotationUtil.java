@@ -27,6 +27,7 @@ class AnnotationUtil {
     /**
      * Returns only the elements that are annotated with the given class. For some reason
      * RoundEnvironment is returning elements annotated by other annotations.
+     * 获取设置了指定注解的元素
      */
     static List<Element> getElementsAnnotatedWith(RoundEnvironment roundEnv,
             Class<? extends Annotation> annotationClass) {

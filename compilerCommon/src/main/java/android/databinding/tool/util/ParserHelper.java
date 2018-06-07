@@ -16,6 +16,11 @@
 
 package android.databinding.tool.util;
 
+/**
+ * 简单的两个工具方法
+ * 1. 给定一个字符串，以"-"或"_"切割，首字母大写转成类名(驼峰法)
+ * 2. 给定字符串，去除拓展名，没有的话，则返回原字符串
+ */
 public class ParserHelper {
     public static String toClassName(String name) {
         StringBuilder builder = new StringBuilder();

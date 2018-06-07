@@ -37,6 +37,9 @@ dependencies {
     compile project(':dataBinding:baseLibrary')
     compile 'org.antlr:antlr4:4.5.3'
     compile 'commons-io:commons-io:2.4'
+
+    // 编码检测依赖
+    // https://code.google.com/archive/p/juniversalchardet/
     compile 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
     compile 'com.google.guava:guava:17.0'
     compile 'com.android.tools:annotations:24.5.0'
