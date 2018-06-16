@@ -16,11 +16,15 @@
 
 package android.databinding.tool.processing;
 
+/**
+ * 异常信息模板定义
+ */
 public class ErrorMessages {
     // databinding 不支持 include 作为 merge的直接子节点
     // todo 为什么
     public static final String INCLUDE_INSIDE_MERGE =
             "Data binding does not support include elements as direct children of a merge element.";
+    // 未定义的变量
     public static final String UNDEFINED_VARIABLE =
             "Identifiers must have user defined types from the XML file. %s is missing it";
     public static final String CANNOT_FIND_SETTER_CALL =

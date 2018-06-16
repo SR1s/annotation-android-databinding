@@ -18,6 +18,12 @@ package android.databinding.tool.processing.scopes;
 
 /**
  * Base class for all scopes
+ * 
+ * Scope代表一个区域，可以是一个文件，如子接口FileScopeProvider
+ * 也可以是文本内的某些区域，如子接口LocationScopeProvider
+ * DataBinding框架在处理的过程中，会通过这些Provider记录当前处理到了哪些区域
+ * 如若在处理的时候发生异常，就通过这种方式获取到区域的位置，记录异常和源文件导致异常区域之间的联系
+ * 这部分是DataBinding用来解决出现异常后，异常信息不友好的问题的一个方式
  */
 public interface ScopeProvider {
 

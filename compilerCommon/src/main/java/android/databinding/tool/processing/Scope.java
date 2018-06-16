@@ -34,23 +34,46 @@ import java.util.List;
  */
 public class Scope {
 
+    /**
+     * todo
+     * 采用ThreadLocal这种设定，应该隐含了上下文是在同一个线程处理的
+     * 否则当一个文件处理任务的子任务切换到其他线程，那么当前处理的上下文不就丢失了
+     * 当然，也可以是任务之间的划分很独立，以至于不需要上下文
+     * 当然，通过某种设计，也可以实现任务和上下文之间的关联引用
+     */
     private static ThreadLocal<ScopeEntry> sScopeItems = new ThreadLocal<ScopeEntry>();
     static List<ScopedException> sDeferredExceptions = new ArrayList<ScopedException>();
 
+    /**
+     * 表示当前的处理任务进到了文本内的某个区域
+     */
     public static void enter(final Location location) {
         enter(new LocationScopeProvider() {
             @Override
             public List<Location> provideScopeLocation() {
+                // 拿单个对象做列表
                 return Collections.singletonList(location);
             }
         });
     }
+
+    /**
+     * 表示当前处理任务进入了某个区域（泛指，可以是文本内的位置，也可以是某个文本）
+     */
     public static void enter(ScopeProvider scopeProvider) {
         ScopeEntry peek = sScopeItems.get();
         ScopeEntry entry = new ScopeEntry(scopeProvider, peek);
+        // sScopeItems这个ThreadLocal对象只存有一个ScopeEntry
+        // ScopeEntry和ScopeEntry组成了一个链表
+        // 彼此相连，上下文也就这么串起来了
+        // 这也印证了之前的猜测：上下文是在同一个线程处理的
         sScopeItems.set(entry);
     }
 
+    /**
+     * 表示离开了当前处理区域
+     * 这个方法同样也是基于ThreadLocal的前提，这样就不会exit错误的对象
+     */
     public static void exit() {
         ScopeEntry entry = sScopeItems.get();
         Preconditions.checkNotNull(entry, "Inconsistent scope exit");
@@ -196,6 +219,17 @@ public class Scope {
         return false;
     }
 
+    /**
+     * ScopeEntry
+     * 指向当前的区域，以及上一级区域
+     * 构成了一个链表
+     * 
+     * todo
+     * 工作中很少干这种手撸链表的情况了
+     * 一个是用不上，一般用List里的LinkedList
+     * 另一个是链表相关的方法要手撸，使用List更方便
+     * 还有就是，这种一级级向上查找的场景不多见
+     */
     private static class ScopeEntry {
 
         ScopeProvider mProvider;

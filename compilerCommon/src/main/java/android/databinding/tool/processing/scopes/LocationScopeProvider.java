@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * An item that is tight to locations in a source file.
+ * 指向源文件中的某些区域
  */
 public interface LocationScopeProvider extends ScopeProvider {
     List<Location> provideScopeLocation();

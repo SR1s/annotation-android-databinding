@@ -18,6 +18,7 @@ package android.databinding.tool.processing.scopes;
 
 /**
  * An item that is tight to a source file.
+ * 指向一个源文件
  */
 public interface FileScopeProvider extends ScopeProvider {
     String provideScopeFilePath();
